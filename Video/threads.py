@@ -23,12 +23,7 @@ class FaceDetector:
     def process_frame(self, image):
         """Process the image and return landmarks if any"""
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        # Add image dimensions
-        h, w = image.shape[:2]
         results = self.face_mesh.process(image_rgb)
-        if results.multi_face_landmarks:
-            for face_landmarks in results.multi_face_landmarks:
-                face_landmarks.image_dimensions = {'width': w, 'height': h}
         return results
 
     def draw_landmarks(self, image, mesh_results):
