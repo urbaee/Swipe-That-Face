@@ -3,6 +3,7 @@ from tkinter import ttk
 import cv2
 from facedetect import FaceDetector
 from utils import list_available_cameras
+from expression import show_expression_game
 
 def run_landmark_view(cam_index):
     cap = cv2.VideoCapture(cam_index)
@@ -89,8 +90,12 @@ def launch_camera_selector():
     
     def on_start():
         root.destroy()
-        run_landmark_view(selected_cam.get())
-    
+        #run_landmark_view(selected_cam.get())
+        show_expression_game (
+            cam_index=selected_cam.get(),
+            emoji_path="Assets/senyum.png"
+        )
+        
     start_button = ttk.Button(
         button_frame,
         text="Start Detection 🎥",
