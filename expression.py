@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 import tkinter as tk
-import tkinter.messagebox as msgbox
 from facedetect import FaceDetector
+import math
 
 tk.Tk().withdraw()  # Hide main tkinter window for popup use
 
@@ -14,17 +14,22 @@ def is_smiling(landmarks, image_width, image_height):
         pt = landmarks.landmark[idx]
         return int(pt.x * image_width), int(pt.y * image_height)
 
-    left_mouth, right_mouth = get_coord(61), get_coord(291)
-    top_lip, bottom_lip = get_coord(13), get_coord(14)
+    # Titik penting
+    left_corner = get_coord(61)
+    right_corner = get_coord(291)
+    mid_upper_lip = get_coord(13)
+    bottom_lip = get_coord(14)
 
-    # Horizontal & vertical distance
-    mouth_width = abs(right_mouth[0] - left_mouth[0])
-    mouth_height = abs(bottom_lip[1] - top_lip[1])
+    # Mulut harus tertutup (opsional tapi penting)
+    mouth_open = abs(bottom_lip[1] - mid_upper_lip[1])
+    is_mouth_closed = mouth_open < 5
 
-    smile_ratio = mouth_width / (mouth_height + 1e-5)
+    # Senyum: sudut bibir lebih tinggi dari titik tengah
+    left_is_higher = left_corner[1] < mid_upper_lip[1] - 3
+    right_is_higher = right_corner[1] < mid_upper_lip[1] - 3
+    is_corner_up = left_is_higher and right_is_higher
 
-    # Atur threshold berdasarkan eksperimen, bisa dinamis nanti
-    return smile_ratio > 2.5 and mouth_height > 8
+    return is_mouth_closed and is_corner_up
 
 def is_big_smiling(landmarks, image_width, image_height):
     """Detect big smile by measuring vertical lip distance ratio"""
