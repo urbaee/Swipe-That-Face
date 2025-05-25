@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import tkinter as tk
 from facedetect import FaceDetector
-import math
 
 tk.Tk().withdraw()  # Hide main tkinter window for popup use
 
@@ -48,119 +47,45 @@ def is_big_smiling(landmarks, image_width, image_height):
     # Big smile = mulut terbuka cukup tinggi, tapi tetap lebar
     return smile_ratio > 1.8 and mouth_height > 20
 
-def show_expression_game(cam_index: int, emoji_path: str):
-    def draw_retry_button(frame):
-        h, w = frame.shape[:2]
-        button_text = "Press 'R' to Retry"
-        font = cv2.FONT_HERSHEY_DUPLEX
-        font_scale = 0.8
-        thickness = 2
-        text_size = cv2.getTextSize(button_text, font, font_scale, thickness)[0]
-        text_x = w - text_size[0] - 20  # Position on right side
-        text_y = h - 20  # Position at bottom
-        
-        # Draw button text with shadow
-        cv2.putText(frame, button_text, (text_x+2, text_y+2), font, font_scale, (0, 0, 0), thickness+1)
-        cv2.putText(frame, button_text, (text_x, text_y), font, font_scale, (0, 255, 0), thickness)
-        return frame
-
-    cap = cv2.VideoCapture(cam_index)
-    detector = FaceDetector()
+def is_blinking(landmarks, image_width, image_height):
+    """Check if user is blinking (either left or right eye)"""
+    def get_coord(idx):
+        pt = landmarks.landmark[idx]
+        return int(pt.x * image_width), int(pt.y * image_height)
     
-    def reset_game():
-        nonlocal current_expression, win_start_time, game_completed, current_emoji
-        current_expression = 0
-        win_start_time = None
-        game_completed = False
-        current_emoji = cv2.imread(expressions[0]["emoji"], cv2.IMREAD_UNCHANGED)
-        current_emoji = cv2.resize(current_emoji, (150, 150))
-
-    # Initialize game variables
-    win_start_time = None
-    WIN_DURATION = 3
-    game_completed = False
+    # Get eye landmarks
+    left_eye_top = get_coord(159)
+    left_eye_bottom = get_coord(145)
+    right_eye_top = get_coord(386)
+    right_eye_bottom = get_coord(374)
     
-    # Expression states
-    current_expression = 0
-    expressions = [
-        {"emoji": "Assets/senyum.png", "detector": is_smiling},
-        {"emoji": "Assets/senyumlebar.png", "detector": is_big_smiling}
-    ]
+    # Calculate eye aspect ratios
+    left_eye_height = abs(left_eye_top[1] - left_eye_bottom[1])
+    right_eye_height = abs(right_eye_top[1] - right_eye_bottom[1])
     
-    # Load first emoji
-    current_emoji = cv2.imread(expressions[0]["emoji"], cv2.IMREAD_UNCHANGED)
-    if current_emoji is None:
-        print("Emoji image not found!")
-        return
-    current_emoji = cv2.resize(current_emoji, (150, 150))
+    # Check if either eye is closed (small height indicates closed eye)
+    threshold = 5
+    return left_eye_height < threshold or right_eye_height < threshold
 
-    while cap.isOpened():
-        success, frame = cap.read()
-        if not success:
-            break
-
-        h, w = frame.shape[:2]
-        landmarks_list = detector.get_landmarks(frame)
-
-        # Draw title
-        title = "Swipe That Face!"
-        font = cv2.FONT_HERSHEY_DUPLEX
-        font_scale = 1.2
-        thickness = 2
-        text_size = cv2.getTextSize(title, font, font_scale, thickness)[0]
-        text_x = (w - text_size[0]) // 2
-        text_y = 50
-        cv2.putText(frame, title, (text_x+2, text_y+2), font, font_scale, (0, 0, 0), thickness+1)
-        cv2.putText(frame, title, (text_x, text_y), font, font_scale, (0, 255, 0), thickness)
-
-        # Handle game logic
-        if landmarks_list:
-            detector.draw_landmarks(frame, landmarks_list)
-            
-            if not game_completed:
-                expression_detected = expressions[current_expression]["detector"](landmarks_list[0], w, h)
-                if expression_detected and win_start_time is None:
-                    win_start_time = cv2.getTickCount()
-
-        # Handle win state and progression
-        if win_start_time is not None and not game_completed:
-            current_time = cv2.getTickCount()
-            elapsed = (current_time - win_start_time) / cv2.getTickFrequency()
-            
-            if elapsed <= WIN_DURATION:
-                text = "Kamu berhasil!"
-                text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
-                text_x = (w - text_size[0]) // 2
-                text_y = h // 2
-                cv2.putText(frame, text, (text_x+2, text_y+2), font, font_scale, (0, 0, 0), thickness+1)
-                cv2.putText(frame, text, (text_x, text_y), font, font_scale, (0, 255, 0), thickness)
-            else:
-                if current_expression < len(expressions) - 1:
-                    current_expression += 1
-                    current_emoji = cv2.imread(expressions[current_expression]["emoji"], cv2.IMREAD_UNCHANGED)
-                    current_emoji = cv2.resize(current_emoji, (150, 150))
-                else:
-                    game_completed = True
-                win_start_time = None
-
-        # Draw current emoji if game is not completed
-        if not game_completed:
-            overlay_img(frame, current_emoji, (10, 10))
-        else:
-            # Draw retry button when game is completed
-            frame = draw_retry_button(frame)
-
-        cv2.imshow('Tiru Ekspresi Ini 😁', frame)
-
-        # Handle keyboard input
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            break
-        elif key == ord('r') and game_completed:
-            reset_game()
-
-    cap.release()
-    cv2.destroyAllWindows()
+def is_eyes_closed(landmarks, image_width, image_height):
+    """Check if both eyes are closed"""
+    def get_coord(idx):
+        pt = landmarks.landmark[idx]
+        return int(pt.x * image_width), int(pt.y * image_height)
+    
+    # Get eye landmarks for both eyes
+    left_eye_top = get_coord(159)
+    left_eye_bottom = get_coord(145)
+    right_eye_top = get_coord(386)
+    right_eye_bottom = get_coord(374)
+    
+    # Calculate eye heights
+    left_eye_height = abs(left_eye_top[1] - left_eye_bottom[1])
+    right_eye_height = abs(right_eye_top[1] - right_eye_bottom[1])
+    
+    # Both eyes must be closed (small height)
+    threshold = 5
+    return left_eye_height < threshold and right_eye_height < threshold
 
 def overlay_img(background, overlay, pos):
     """Gabungin overlay (dengan transparansi) ke frame utama."""
@@ -177,3 +102,8 @@ def overlay_img(background, overlay, pos):
             )
     else:
         background[y:y+h, x:x+w] = overlay
+
+def show_expression_game(cam_index: int, emoji_path: str):
+    from game import ExpressionGame
+    game = ExpressionGame(cam_index)
+    game.run()
