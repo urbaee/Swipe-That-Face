@@ -83,12 +83,12 @@ def is_eyes_closed(landmarks, image_width, image_height):
     left_eye_height = abs(left_eye_top[1] - left_eye_bottom[1])
     right_eye_height = abs(right_eye_top[1] - right_eye_bottom[1])
     
-    # Both eyes must be closed (small height)
+    # Mata (booth) harus nutup
     threshold = 5
     return left_eye_height < threshold and right_eye_height < threshold
 
 def overlay_img(background, overlay, pos):
-    """Gabungin overlay (dengan transparansi) ke frame utama."""
+    """Menggabungkan overlay (dengan transparansi) ke frame utama."""
     x, y = pos
     h, w = overlay.shape[:2]
 
