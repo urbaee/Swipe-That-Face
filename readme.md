@@ -1,7 +1,9 @@
 # Swipe That Face! 🎭
 
 ## Overview
-Swipe That Face! is an interactive face filter game that challenges users to mimic various facial expressions based on eye and mouth shapes. This engaging filter provides a fun and interactive way to test your facial expression mimicry skills.
+Our final project is titled "Swipe That Face!"—an interactive facial expression filter developed in Python using the MediaPipe library. The primary objective of this project is to create an engaging experience centered around facial expression recognition.
+
+The filter challenges users to mimic a series of facial expressions represented by emojis, focusing primarily on eye and lip movements. Users progress through multiple challenge levels, each requiring them to replicate a different expression—such as smiling, surprise, sadness, and others. To move on to the next level, the user's facial expression must successfully match the one shown on the screen.
 
 ## Features
 - Multiple levels with unique facial expressions
@@ -26,4 +28,5 @@ Swipe That Face! is an interactive face filter game that challenges users to mim
 
 ## Credits
 Developed by [Cemiwiw Team]
+Report link : 
 For Multimedia Project - Semester 6
