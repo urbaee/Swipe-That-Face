@@ -1,22 +1,25 @@
 import cv2
+import numpy as np
 from facedetect import FaceDetector
 from expression import is_smiling, is_big_smiling, is_blinking, is_eyes_closed
 from playsound import playsound
 import threading
+import sys
 
 class ExpressionGame:
     def __init__(self, cam_index):
         self.cap = cv2.VideoCapture(cam_index)
+        # Set camera properties to 1280x720
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.detector = FaceDetector()
-        self.window_size = (640, 640)
-        self.setup_window()
+        self.window_size = (1280, 720)  # Changed from (640, 640)
+        self.setup_window = lambda: None  # Disable CV2 window creation
         self.setup_game_states()
         self.load_expressions()
-        self.success_sound = "sound/good-job.mp3"
-        
-    def setup_window(self):
-        cv2.namedWindow('Swipe That Face!', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('Swipe That Face!', *self.window_size)
+        self.success_sound = "sound/berhasil.mp3"
+        self.show_landmarks = True  # Add this line to track landmark visibility
+        self.audio_threads = []  # Add this line to track audio threads
         
     def setup_game_states(self):
         self.MENU = 0
@@ -70,7 +73,7 @@ class ExpressionGame:
 
     def show_main_menu(self, frame):
         self.draw_ui(frame, "Swipe That Face!", 'top', 1.5, (0, 255, 0))
-        self.draw_ui(frame, "Press SPACE to PLAY", position='center', font_scale=1.0, color=(255, 255, 255))
+        # Removed "Press SPACE to PLAY" text
 
     def show_countdown(self, frame, number):
         self.draw_ui(frame, str(number), 'center', 4.0, (0, 255, 255))
@@ -88,57 +91,78 @@ class ExpressionGame:
         else:
             frame[y:y+h, x:x+w] = emoji
 
-    def run(self):
-        while self.cap.isOpened():
-            success, frame = self.cap.read()
-            if not success:
-                break
-
-            # Resize frame to square
-            h, w = frame.shape[:2]
-            size = min(h, w)
-            start_x = (w - size) // 2
-            start_y = (h - size) // 2
-            frame = frame[start_y:start_y+size, start_x:start_x+size]
-            frame = cv2.resize(frame, self.window_size)
-
-            if self.game_state == self.MENU:
-                self.show_main_menu(frame)
-                if cv2.waitKey(1) & 0xFF == ord(' '):
-                    self.game_state = self.COUNTDOWN
-                    self.countdown_start = cv2.getTickCount()
-
-            elif self.game_state == self.COUNTDOWN:
-                current_time = cv2.getTickCount()
-                elapsed = (current_time - self.countdown_start) / cv2.getTickFrequency()
-                countdown_number = 3 - int(elapsed)
-                
-                if countdown_number > 0:
-                    self.show_countdown(frame, countdown_number)
-                else:
-                    self.game_state = self.PLAYING
-                    self.reset_game()
-
-            elif self.game_state == self.PLAYING:
-                self.handle_gameplay(frame)
-
-            cv2.imshow('Swipe That Face!', frame)
-            
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('q'):
-                break
-            elif key == ord('r') and self.game_completed:
-                if self.game_state == self.PLAYING:
-                    self.reset_game()
-                else:
-                    self.game_state = self.MENU
-
-        self.cap.release()
+    def cleanup(self):
+        """Cleanup resources before exit"""
+        if self.cap is not None:
+            self.cap.release()
         cv2.destroyAllWindows()
+        
+        # Wait for any audio threads to complete
+        for thread in self.audio_threads:
+            if thread.is_alive():
+                thread.join(timeout=1.0)
+
+    def play_success_sound(self):
+        """Play sound in thread and track it"""
+        thread = threading.Thread(
+            target=playsound, 
+            args=(self.success_sound,), 
+            daemon=True
+        )
+        self.audio_threads.append(thread)
+        thread.start()
+
+    def get_current_frame(self):
+        """Get processed frame for current game state"""
+        success, frame = self.cap.read()
+        if not success:
+            return None
+            
+        # Process frame
+        frame = self.process_frame(frame)
+        
+        # Handle different game states
+        if self.game_state == self.MENU:
+            self.show_main_menu(frame)
+        elif self.game_state == self.COUNTDOWN:
+            self.handle_countdown(frame)
+        elif self.game_state == self.PLAYING:
+            self.handle_gameplay(frame)
+            
+        return frame
 
     def play_success_sound(self):
         # Play in separate thread to avoid blocking
         threading.Thread(target=playsound, args=(self.success_sound,), daemon=True).start()
+
+    def process_frame(self, frame):
+        """Process the frame for gameplay"""
+        h, w = frame.shape[:2]
+        target_w, target_h = self.window_size
+        
+        # Calculate scaling factor
+        scale = min(target_w/w, target_h/h)
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        
+        # Resize frame preserving aspect ratio
+        frame = cv2.resize(frame, (new_w, new_h))
+        
+        # Create black canvas of target size
+        canvas = np.zeros((target_h, target_w, 3), dtype=np.uint8)
+        
+        # Center the frame on canvas
+        y_offset = (target_h - new_h) // 2
+        x_offset = (target_w - new_w) // 2
+        canvas[y_offset:y_offset+new_h, x_offset:x_offset+new_w] = frame
+
+        return canvas
+
+    def start_game(self):
+        """Start game from menu state"""
+        if self.game_state == self.MENU:
+            self.game_state = self.COUNTDOWN
+            self.countdown_start = cv2.getTickCount()
 
     def handle_gameplay(self, frame):
         h, w = frame.shape[:2]
@@ -147,7 +171,8 @@ class ExpressionGame:
         self.draw_ui(frame, "Swipe That Face!", 'top')
 
         if landmarks_list:
-            self.detector.draw_landmarks(frame, landmarks_list)
+            if self.show_landmarks:
+                self.detector.draw_landmarks(frame, landmarks_list)
             
             if not self.game_completed:
                 expression_detected = self.expressions[self.current_expression]["detector"](
@@ -160,10 +185,23 @@ class ExpressionGame:
         if not self.game_completed:
             self.overlay_emoji(frame, self.current_emoji, (10, 10))
         else:
-            # Show reset instruction when game is completed
-            self.draw_ui(frame, "Press R to RESET", position='bottom', font_scale=1.0, color=(255, 255, 255))
+            # Changed message to be simpler
+            self.draw_ui(frame, "Game Completed!", position='center', font_scale=1.0, color=(255, 255, 255))
+
+    def handle_countdown(self, frame):
+        """Handle countdown state"""
+        current_time = cv2.getTickCount()
+        elapsed = (current_time - self.countdown_start) / cv2.getTickFrequency()
+        countdown_number = 3 - int(elapsed)
+        
+        if countdown_number > 0:
+            self.show_countdown(frame, countdown_number)
+        else:
+            self.game_state = self.PLAYING
+            self.reset_game()
 
     def handle_win_state(self, frame):
+        """Handle win state logic"""
         if self.win_start_time is not None and not self.game_completed:
             current_time = cv2.getTickCount()
             elapsed = (current_time - self.win_start_time) / cv2.getTickFrequency()

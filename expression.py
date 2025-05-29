@@ -104,6 +104,11 @@ def overlay_img(background, overlay, pos):
         background[y:y+h, x:x+w] = overlay
 
 def show_expression_game(cam_index: int, emoji_path: str):
-    from game import ExpressionGame
-    game = ExpressionGame(cam_index)
-    game.run()
+    from PyQt6.QtWidgets import QApplication
+    from qtgame import GameWindow
+    import sys
+    
+    app = QApplication(sys.argv)
+    window = GameWindow(cam_index)
+    window.show()
+    sys.exit(app.exec())

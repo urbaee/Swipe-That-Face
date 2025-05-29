@@ -27,93 +27,116 @@ def run_landmark_view(cam_index):
     cap.release()
     cv2.destroyAllWindows()
 
-def launch_camera_selector():
-    cam_list = list_available_cameras()
+def get_available_cameras():
+    """Deteksi kamera yang benar-benar tersedia"""
+    available_cameras = []
+    max_test = 10  # Test sampai index 10
+    
+    for i in range(max_test):
+        cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)  # Gunakan DirectShow
+        if cap.isOpened():
+            # Ambil informasi kamera
+            ret, frame = cap.read()
+            if ret:
+                # Dapatkan nama device
+                name = f"Camera {i}"
+                try:
+                    # Coba dapatkan nama backend
+                    backend = cap.getBackendName()
+                    if backend:
+                        name = f"{backend} Camera {i}"
+                except:
+                    pass
+                available_cameras.append((i, name))
+            cap.release()
+    return available_cameras
 
-    root = tk.Tk()
-    root.title("Camera Selector")
-    
-    # Set window size and position it at center
-    window_width = 400
-    window_height = 400
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    center_x = int(screen_width/2 - window_width/2)
-    center_y = int(screen_height/2 - window_height/2)
-    root.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
-    
-    # Configure styles
-    style = ttk.Style()
-    style.configure('Custom.TLabel', font=('Poppins', 12))
-    style.configure('Custom.TCombobox', font=('Poppins', 10))
-    
-    # Create main frame
-    main_frame = ttk.Frame(root, padding="20")
-    main_frame.pack(fill=tk.BOTH, expand=True)
-    
-    # Header
-    header_frame = ttk.Frame(main_frame)
-    header_frame.pack(fill=tk.X, pady=(0, 20))
-    
-    title_label = ttk.Label(
-        header_frame, 
-        text="Select Your Camera", 
-        style='Custom.TLabel',
-        font=('Poppins', 16, 'bold')
-    )
-    title_label.pack()
-    
-    # Camera selection section
-    selected_cam = tk.IntVar()
-    
-    cam_label = ttk.Label(
-        main_frame, 
-        text="Available Cameras:", 
-        style='Custom.TLabel'
-    )
-    cam_label.pack(anchor=tk.W)
-    
-    cam_dropdown = ttk.Combobox(
-        main_frame, 
-        values=cam_list, 
-        textvariable=selected_cam,
-        style='Custom.TCombobox',
-        state='readonly',
-        width=30
-    )
-    cam_dropdown.current(0)
-    cam_dropdown.pack(pady=(5, 20), fill=tk.X)
-    
-    # Button frame
-    button_frame = ttk.Frame(main_frame)
-    button_frame.pack(side=tk.BOTTOM, pady=(0, 20))
-    
-    def on_start():
-        root.destroy()
-        #run_landmark_view(selected_cam.get())
-        show_expression_game (
-            cam_index=selected_cam.get(),
-            emoji_path="Assets/senyum.png"
-        )
+class CameraSelector(tk.Toplevel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.selected_camera = None
+        self.camera_indices = []
+        self.initUI()
         
-    start_button = ttk.Button(
-        button_frame,
-        text="Start Detection 🎥",
-        command=on_start,
-        style='Custom.TButton',
-        padding=10
-    )
-    start_button.pack(ipadx=20)
-    
-    # Configure custom button style
-    style.configure(
-        'Custom.TButton',
-        font=('Poppins', 12),
-        background='#008000',
-        foreground='#008000'
-    )
-    
-    # Make window non-resizable
-    root.resizable(False, False)
-    
-    root.mainloop()
+    def initUI(self):
+        self.title('Select Camera')
+        self.geometry('800x600')  # Ukuran window lebih besar
+        self.resizable(False, False)
+        
+        # Style untuk judul
+        title_label = tk.Label(
+            self, 
+            text="Select Your Camera",
+            font=('Arial', 24, 'bold'),  # Font lebih besar
+            pady=20
+        )
+        title_label.pack(pady=40)  # Spacing lebih besar
+        
+        # Detect available cameras
+        cameras = get_available_cameras()
+        
+        if not cameras:
+            label = tk.Label(
+                self, 
+                text="No cameras found!",
+                font=('Arial', 16),  # Font lebih besar
+                fg='red'
+            )
+            label.pack(pady=30)
+        else:
+            # Store camera indices and names
+            self.camera_indices = [idx for idx, name in cameras]
+            camera_names = [name for idx, name in cameras]
+            
+            # Style combobox
+            style = ttk.Style()
+            style.configure('Custom.TCombobox', font=('Arial', 14))  # Font lebih besar
+            
+            self.combo = ttk.Combobox(
+                self, 
+                values=camera_names, 
+                state='readonly', 
+                width=40,  # Width lebih besar
+                font=('Arial', 14),  # Font lebih besar
+                style='Custom.TCombobox'
+            )
+            self.combo.pack(pady=(30, 20))  # Spacing lebih besar
+            self.combo.current(0)
+            
+            # Style button
+            select_btn = ttk.Button(
+                self, 
+                text='Start Camera',  # Text lebih deskriptif
+                command=self.on_select,
+                style='Custom.TButton'
+            )
+            
+            # Custom style untuk button
+            style.configure(
+                'Custom.TButton',
+                font=('Arial', 14, 'bold'),  # Font lebih besar
+                padding=10
+            )
+            
+            select_btn.pack(pady=30)  # Spacing lebih besar
+
+    def on_select(self):
+        current_idx = self.combo.current()  # Use current() instead of currentIndex()
+        self.selected_camera = self.camera_indices[current_idx]  # Get the actual camera index
+        self.destroy()
+
+def launch_camera_selector():
+    dialog = CameraSelector()
+    dialog.grab_set()  # Make the dialog modal
+    dialog.wait_window()  # Wait for the dialog to close
+    return dialog.selected_camera if dialog.selected_camera is not None else -1
+
+def main():
+    cam_index = launch_camera_selector()
+    if cam_index != -1:
+        run_landmark_view(cam_index)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+    main()
