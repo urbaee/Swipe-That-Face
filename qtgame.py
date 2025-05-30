@@ -1,8 +1,10 @@
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, 
-                           QHBoxLayout, QPushButton, QLabel, QFrame)
+                            QHBoxLayout, QPushButton, QLabel, QFrame)
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QImage, QPixmap
+from PyQt6.QtGui import QImage, QPixmap, QIcon
 import cv2
+import threading
+from playsound import playsound
 import numpy as np
 from game import ExpressionGame
 
@@ -10,9 +12,27 @@ class GameWindow(QMainWindow):
     def __init__(self, cam_index):
         super().__init__()
         self.game = ExpressionGame(cam_index)
-        self.is_closing = False  # Add flag to track window state
+        self.is_closing = False
+        # Start background music in a separate thread
+        self.bg_music_thread = threading.Thread(
+            target=self.play_background_music,
+            daemon=True
+        )
+        self.bg_music_thread.start()
+        self.setWindowIcon(QIcon('logo/icon.png'))
         self.initUI()
         
+    def play_background_music(self):
+        while not self.is_closing:
+            playsound("sound/backsound.mp3")
+    
+    def closeEvent(self, event):
+        self.is_closing = True
+        if hasattr(self, 'timer'):
+            self.timer.stop()
+        self.game.cleanup()
+        event.accept()
+
     def initUI(self):
         # Main widget and layout
         central_widget = QWidget()
@@ -147,10 +167,3 @@ class GameWindow(QMainWindow):
             self.game.game_state = self.game.MENU
             self.start_btn.setEnabled(True)
             self.reset_btn.setEnabled(False)
-
-    def closeEvent(self, event):
-        self.is_closing = True  # Set closing flag
-        if hasattr(self, 'timer'):
-            self.timer.stop()  # Stop the timer
-        self.game.cleanup()  # Cleanup game resources
-        event.accept()

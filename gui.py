@@ -1,9 +1,10 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, PhotoImage
 import cv2
 from facedetect import FaceDetector
 from utils import list_available_cameras
 from expression import show_expression_game
+from PyQt6.QtGui import QIcon
 
 def run_landmark_view(cam_index):
     cap = cv2.VideoCapture(cam_index)
@@ -56,8 +57,24 @@ class CameraSelector(tk.Toplevel):
         super().__init__(parent)
         self.selected_camera = None
         self.camera_indices = []
+        # Change icon setting method
+        self.icon = PhotoImage(file='logo/icon.png')
+        self.tk.call('wm', 'iconphoto', self._w, self.icon)
         self.initUI()
+        self.center_window()
         
+    def center_window(self):
+        # Get screen width and height
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        
+        # Calculate window position
+        x = (screen_width - 800) // 2  # 800 is window width
+        y = (screen_height - 600) // 2  # 600 is window height
+        
+        # Set window position
+        self.geometry(f'800x600+{x}+{y}')
+
     def initUI(self):
         self.title('Select Camera')
         self.geometry('800x600')  # Ukuran window lebih besar
