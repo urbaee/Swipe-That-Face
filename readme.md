@@ -61,6 +61,8 @@ utils.py
 | 4    | 2025-03-25 | - Refactoring code <br> - Adding more assets <br> - Adding sound effect and more function <br> - Initiation the report          | 75%, optimized codebase for scalability, enhanced user experience with visual and audio assets, and started documentation draft.  |
 | 5    | 2025-03-29 | - Adding interactive GUI for easy use (user-friendly) <br> - Fixing sound effect <br> - Report still in progress          | 90%, completed interactive and intuitive GUI, finalized sound integration, and advanced report writing phase. |
 | 6    | 2025-03-30 | - Adding icon and logo <br> - Adding backsound for the filter game <br> - Adding .gitignore <br> - Updating README.md  <br> - Report still in progress        | 95%, finalized branding elements, enriched audio-visual experience, cleaned up project structure, and polished documentation. |
+| 7    | 2025-03-31 | - Finishing Report <br> - Adding demo video        | 100%, Project Completed |
+
 
 ---
 
@@ -89,7 +91,11 @@ pip install -r requirements.txt
 python main.py
 ```
 
+---
+
 ## Credits
-Developed by [Cemiwiw Team]
-Report link : 
-For Multimedia Project - Semester 6
+Developed by [Cemiwiw Team] \
+Report link : [Report in Google Drive (PDF)](https://drive.google.com/file/d/1xhcQkBewm_mPf51T4zk9Wt1sXHzKMXUF/view?usp=sharing)
+
+MIT License \
+Copyright (c) 2025 Rahmat Aldi Nasda, Shafa Aulia, and Naufal Saqib Athaya
