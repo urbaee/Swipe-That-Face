@@ -58,7 +58,7 @@ utils.py
 | 1    | 2025-05-08 | Project initiation   | 10%, brainstorming the core logic, defining game mechanics, and initiating basic code structure.          |
 | 2    | 2025-05-18 | - Adding face detection <br> - Adding cam selector <br> - Adding simple GUI |  25%, Successfully implemented initial face tracking, added basic camera selection, and created a prototype GUI for early testing.           |
 | 3    | 2025-03-19 | - Fixing minor issue <br> - Adding filter code       | 50%, resolved early bugs and integrated filter expression logic for real-time face effect matching.    |
-| 5    | 2025-03-25 | - Refactoring code <br> - Adding more assets <br> - Adding sound effect and more function <br> - Initiation the report          | 75%, optimized codebase for scalability, enhanced user experience with visual and audio assets, and started documentation draft.  |
+| 4    | 2025-03-25 | - Refactoring code <br> - Adding more assets <br> - Adding sound effect and more function <br> - Initiation the report          | 75%, optimized codebase for scalability, enhanced user experience with visual and audio assets, and started documentation draft.  |
 | 5    | 2025-03-29 | - Adding interactive GUI for easy use (user-friendly) <br> - Fixing sound effect <br> - Report still in progress          | 90%, completed interactive and intuitive GUI, finalized sound integration, and advanced report writing phase. |
 | 6    | 2025-03-30 | - Adding icon and logo <br> - Adding backsound for the filter game <br> - Adding .gitignore <br> - Updating README.md  <br> - Report still in progress        | 95%, finalized branding elements, enriched audio-visual experience, cleaned up project structure, and polished documentation. |
 
