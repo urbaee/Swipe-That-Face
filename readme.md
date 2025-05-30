@@ -95,7 +95,8 @@ python main.py
 
 ## Credits
 Developed by [Cemiwiw Team] \
-Report link : [Report in Google Drive (PDF)](https://drive.google.com/file/d/1xhcQkBewm_mPf51T4zk9Wt1sXHzKMXUF/view?usp=sharing)
+Report link : [Report in Google Drive (PDF)](https://drive.google.com/file/d/1xhcQkBewm_mPf51T4zk9Wt1sXHzKMXUF/view?usp=sharing) \
+Demo Video : [Youtube Demo Final Project](https://www.youtube.com/watch?v=mJ7a0TqJscs)
 
 MIT License \
 Copyright (c) 2025 Rahmat Aldi Nasda, Shafa Aulia, and Naufal Saqib Athaya
